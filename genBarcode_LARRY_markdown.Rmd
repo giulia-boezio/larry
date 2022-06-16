@@ -3,17 +3,6 @@ title: genBarcode_LARRY
 output: html_notebook
 ---
 
-First, subset 10000 reads as a trial dataset, on the Terminal with:
-
-conda install -c bioconda seqtk
-
-seqtk sample -s100 BOE4508A1_S1_L001_R2_001.fastq 10000 \> BOE4508A1_S1_L001_R2_001_sub.fastq
-
-seqtk sample -s100 BOE4508A2_S2_L001_R2_001.fastq 10000 \> BOE4508A2_S2_L001_R2_001_sub.fastq
-
-*(Do not use \_crop files because they are not fastq, but only reads.)*
-
-
 Load libraries:
 
 ```{r}
@@ -27,19 +16,6 @@ library(ggplot2)
 
     translation of raw next generation sequencing (NGS) data files into a sorted table of BC sequences and its corresponding read counts
 
-s_dir \<- system.file("extdata", package = "genBaRcode") results_dir default is NULL --\> same as source_dir
-
-Set *wobble_extraction* = FALSE to keep the full BC.
-
-*cpus* : cpus available to use
-
-*bc_backbone* : character string describing the barcode design, variable positions have to be marked with the letter 'N'
-
-*save_it* --\> save it to .csv file
-
-*min_score* : a positive integer value, all fastq sequence with an average score smaller then min_score will be excluded, if min_score = 0 there will be no quality score filtering
-
-*strategy* : the default is "sequential" (cpus = 1) and "multisession" (cpus > 1). 
 
 **LARRY BARCODE:**
 
@@ -65,7 +41,7 @@ bb <- "TGNNNNTGNNNNCANNNNACNNNNGANNNNGTNNNNAGNNNN"
 ```
 
 
-Run function on real data: 
+Run function: 
 
 ```{r}
 BC_dat <- processingRawData(file_name = file_input, 
@@ -89,31 +65,6 @@ head(getReads(BC_dat))
 ```
 
 
-
-Also modifying or swapping the slot-specific data is easily possible:
-
-```{r setup, include = FALSE}
-# BC_data<-setReads(BC_data,data.frame(read_count=c(1:5),barcode=letters[1:5])) 
-# BC_data<-setResultsDir(BC_data,"/my/test/folder/") 
-# BC_data<-setBackbone(BC_data,"AAANNNNGGG") 
-# BC_data<-setLabel(BC_data,"newlabel")
-
-```
-
-There is also the possibility to re-analyze already stored barcode-lists via the function readBCdat(). 
-You can just re-read your already made csv and store it into a BCdat object.
-
-```{r setup, include = FALSE}
-
-BC_dat_new <- readBCdat(path="/my/test/folder/", 
-                        label="test", 
-                        BC_backbone="AAANNNNCCCC", 
-                        file_name="test.csv", 
-                        s=";")
-
-```
-
-
 **2. Error correction (EC):** error-correction (EC) of the detected BCs.
 
 BC_dat=BC_data, maxDist=4, save_it=FALSE, cpus=1, strategy="sequential", m="hamming", type="clustering", only_EC_BCs=TRUE, EC_analysis=FALSE, start_small=FALSE
@@ -131,7 +82,6 @@ nrow(BC_dat_EC_4@reads)
 ```
 
 
-*max_Dist* : BCs with a distance \< maxDist will be clustered together, starting with the least frequent BC
 
 **3. Graphic visualization**
 
@@ -145,13 +95,6 @@ ggsave(path = plots_dir,
   filename = paste0(output_label, "_QC.pdf"),
   plot = last_plot(),
 )
-```
-
-
-Plot quality score across length of read:
-```{r setup, include = FALSE}
-
-plotQualityScorePerCycle(source_dir=directory ,file_name= file_input)
 ```
 
 
@@ -179,20 +122,7 @@ ggsave(path = plots_dir,
   bg = "transparent",
 )
 ```
-```{r setup, include = FALSE}
 
-plotReadFrequencies(BC_dat = BC_dat_EC_4)
-```
-```{r}
-plotReadFrequencies(BC_dat = BC_dat_EC_4, log= TRUE)
-
-ggsave(path = plots_dir,
-  filename = paste0(output_label,"_readfreq.pdf"),
-  plot = last_plot(),
-  bg = "transparent",
-)
-
-```
 Plot barcode distances:
 ```{r}
 ggplotDistanceGraph(BC_dat=BC_dat_EC_4,minDist=1,loga=TRUE,m="hamming")
